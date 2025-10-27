@@ -1,4 +1,7 @@
 import 'dotenv/config';
+import { withPaymentInterceptor } from 'x402-axios';
+import axios from 'axios';
+import { privateKeyToAccount } from 'viem/accounts';
 
 /**
  * Model Comparison Example
@@ -8,25 +11,25 @@ import 'dotenv/config';
  */
 
 async function compareModels() {
-  const { x402Fetch } = await import('x402-fetch');
-  
-  const fetch = x402Fetch({
-    privateKey: process.env.PRIVATE_KEY!,
-    network: 'base'
-  });
+  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+
+  const client = withPaymentInterceptor(
+    axios.create({ baseURL: 'https://jatevo.ai' }),
+    account
+  );
 
   const prompt = 'Write a haiku about artificial intelligence';
 
   // Models to compare
   const models = [
-    { name: 'Qwen 3 Coder 480B', endpoint: 'qwen', id: 'qwen-3-coder-480b' },
-    { name: 'DeepSeek R1', endpoint: 'deepseek-r1-0528', id: 'deepseek-r1' },
-    { name: 'Kimi K2', endpoint: 'kimi', id: 'kimi-k2-instruct' }
+    { name: 'Qwen 3 Coder 480B', endpoint: 'qwen' },
+    { name: 'DeepSeek R1', endpoint: 'deepseek-r1-0528' },
+    { name: 'Kimi K2', endpoint: 'kimi' }
   ];
 
   console.log('🚀 Comparing 3 models for the same prompt...');
   console.log('Prompt:', prompt, '\n');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
 
   const results = [];
 
@@ -36,20 +39,14 @@ async function compareModels() {
     try {
       const startTime = Date.now();
       
-      const response = await fetch(
-        `https://jatevo.ai/api/x402/llm/${model.endpoint}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [{ role: 'user', content: prompt }],
-            temperature: 0.8,
-            max_tokens: 100
-          })
-        }
-      );
+      const response = await client.post(`/api/x402/llm/${model.endpoint}`, {
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.8,
+        max_tokens: 100,
+        stream: false
+      });
 
-      const data = await response.json();
+      const data = response.data;
       const duration = Date.now() - startTime;
 
       results.push({
@@ -62,7 +59,7 @@ async function compareModels() {
       console.log('✓ Response received in', duration, 'ms');
 
     } catch (error: any) {
-      console.error(`✗ Error with ${model.name}:`, error.message);
+      console.error(`✗ Error with ${model.name}:`, error.response?.data || error.message);
     }
   }
 

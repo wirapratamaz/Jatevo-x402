@@ -1,4 +1,7 @@
 import 'dotenv/config';
+import { withPaymentInterceptor } from 'x402-axios';
+import axios from 'axios';
+import { privateKeyToAccount } from 'viem/accounts';
 
 /**
  * Basic Chat Example
@@ -8,35 +11,31 @@ import 'dotenv/config';
  */
 
 async function basicChat() {
-  const { x402Fetch } = await import('x402-fetch');
-  
-  // Configure x402-enabled fetch with your private key
-  const fetch = x402Fetch({
-    privateKey: process.env.PRIVATE_KEY!,
-    network: 'base'
-  });
+  // Configure your account with private key from environment
+  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+
+  // Create axios client with x402 payment interceptor
+  const client = withPaymentInterceptor(
+    axios.create({ baseURL: 'https://jatevo.ai' }),
+    account
+  );
 
   console.log('🚀 Sending chat request to Qwen 3 Coder 480B...\n');
 
   try {
-    const response = await fetch('https://jatevo.ai/api/x402/llm/qwen', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages: [
-          { 
-            role: 'user', 
-            content: 'Explain quantum computing in simple terms, under 100 words' 
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 500
-      })
+    const response = await client.post('/api/x402/llm/qwen', {
+      messages: [
+        { 
+          role: 'user', 
+          content: 'Explain quantum computing in simple terms, under 100 words' 
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+      stream: false
     });
 
-    const data = await response.json();
+    const data = response.data;
 
     console.log('✅ Response received!\n');
     console.log('Model:', data.model);
@@ -46,12 +45,10 @@ async function basicChat() {
     console.log('  - Completion tokens:', data.usage.completion_tokens);
     console.log('  - Total tokens:', data.usage.total_tokens);
     console.log('\n💰 Cost: $0.01 USDC');
-    
-    // Payment confirmation is in the response headers
-    console.log('\n✓ Payment verified via x402');
+    console.log('✓ Payment verified via x402');
 
   } catch (error: any) {
-    console.error('❌ Error:', error.message);
+    console.error('❌ Error:', error.response?.data || error.message);
     throw error;
   }
 }

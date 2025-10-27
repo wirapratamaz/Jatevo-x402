@@ -20,7 +20,9 @@
   "author": "JATEVO",
   "license": "MIT",
   "dependencies": {
-    "x402-fetch": "^0.1.0",
+    "x402-axios": "^0.1.0",
+    "axios": "^1.6.0",
+    "viem": "^2.0.0",
     "dotenv": "^16.4.5"
   },
   "devDependencies": {

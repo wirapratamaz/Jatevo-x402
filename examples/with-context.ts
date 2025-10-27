@@ -1,4 +1,7 @@
 import 'dotenv/config';
+import { withPaymentInterceptor } from 'x402-axios';
+import axios from 'axios';
+import { privateKeyToAccount } from 'viem/accounts';
 
 /**
  * Conversation with Context Example
@@ -8,12 +11,12 @@ import 'dotenv/config';
  */
 
 async function conversationWithContext() {
-  const { x402Fetch } = await import('x402-fetch');
-  
-  const fetch = x402Fetch({
-    privateKey: process.env.PRIVATE_KEY!,
-    network: 'base'
-  });
+  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
+
+  const client = withPaymentInterceptor(
+    axios.create({ baseURL: 'https://jatevo.ai' }),
+    account
+  );
 
   // Maintain conversation history
   const conversation = [
@@ -22,23 +25,20 @@ async function conversationWithContext() {
   ];
 
   console.log('🚀 Starting multi-turn conversation with GLM 4.5...\n');
-  console.log('=' .repeat(80));
+  console.log('='.repeat(80));
 
   try {
     // First exchange
     console.log('\n👤 User:', conversation[1].content);
     
-    let response = await fetch('https://jatevo.ai/api/x402/llm/glm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: conversation,
-        temperature: 0.7,
-        max_tokens: 300
-      })
+    let response = await client.post('/api/x402/llm/glm', {
+      messages: conversation,
+      temperature: 0.7,
+      max_tokens: 300,
+      stream: false
     });
 
-    let data = await response.json();
+    let data = response.data;
     const firstResponse = data.choices[0].message.content;
     conversation.push({ role: 'assistant', content: firstResponse });
     
@@ -52,17 +52,14 @@ async function conversationWithContext() {
     console.log('\n' + '='.repeat(80));
     console.log('\n👤 User:', followUp);
     
-    response = await fetch('https://jatevo.ai/api/x402/llm/glm', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        messages: conversation,
-        temperature: 0.7,
-        max_tokens: 500
-      })
+    response = await client.post('/api/x402/llm/glm', {
+      messages: conversation,
+      temperature: 0.7,
+      max_tokens: 500,
+      stream: false
     });
 
-    data = await response.json();
+    data = response.data;
     const secondResponse = data.choices[0].message.content;
     
     console.log('\n🤖 Assistant:', secondResponse);
@@ -77,7 +74,7 @@ async function conversationWithContext() {
     console.log('\n✓ Context maintained across both requests!');
 
   } catch (error: any) {
-    console.error('❌ Error:', error.message);
+    console.error('❌ Error:', error.response?.data || error.message);
     throw error;
   }
 }

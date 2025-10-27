@@ -1,65 +1,57 @@
 import 'dotenv/config';
+import { withPaymentInterceptor } from 'x402-axios';
+import axios from 'axios';
+import { privateKeyToAccount } from 'viem/accounts';
 
 /**
  * Multi-Model Query Example
  * 
- * This example demonstrates how to query all 6 LLM models in parallel
- * and compare their responses.
+ * This example demonstrates how to query all 6 models simultaneously
+ * and get aggregated results for comparison.
  */
 
 async function multiModelQuery() {
-  const { x402Fetch } = await import('x402-fetch');
-  
-  const fetch = x402Fetch({
-    privateKey: process.env.PRIVATE_KEY!,
-    network: 'base'
-  });
+  const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
 
-  const question = 'What is the capital of France? Answer in one sentence.';
+  const client = withPaymentInterceptor(
+    axios.create({ baseURL: 'https://jatevo.ai' }),
+    account
+  );
 
-  console.log('🚀 Querying all 6 models in parallel...');
-  console.log('Question:', question, '\n');
+  const prompt = 'What is the most efficient sorting algorithm and why?';
+
+  console.log('🚀 Querying all 6 models simultaneously...\n');
+  console.log('Prompt:', prompt, '\n');
 
   try {
-    const response = await fetch('https://jatevo.ai/api/x402/multi', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages: [
-          { role: 'user', content: question }
-        ],
-        temperature: 0.3,
-        max_tokens: 100
-      })
+    const response = await client.post('/api/x402/multi', {
+      messages: [
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.5,
+      max_tokens: 300,
+      stream: false
     });
 
-    const data = await response.json();
+    const data = response.data;
 
-    console.log('✅ All models responded!\n');
-    console.log('=' .repeat(80));
+    console.log('✅ Received responses from all models!\n');
+    console.log('='.repeat(80));
 
     // Display each model's response
-    data.models.forEach((model: any) => {
-      console.log(`\n📦 ${model.name.toUpperCase()}`);
-      console.log(`Provider: ${model.provider}`);
-      console.log(`Response: ${model.content}`);
-      console.log(`Tokens: ${model.usage.total_tokens}`);
-      console.log(`Duration: ${model.duration_ms}ms`);
+    data.models.forEach((modelResult: any, index: number) => {
+      console.log(`\n${index + 1}. ${modelResult.model.toUpperCase()}`);
+      console.log('-'.repeat(80));
+      console.log(modelResult.response.choices[0].message.content);
+      console.log('\n📊 Tokens:', modelResult.response.usage.total_tokens);
     });
 
     console.log('\n' + '='.repeat(80));
-    console.log('\n📊 Summary:');
-    console.log('  - Total models queried:', data.models.length);
-    console.log('  - Total tokens used:', data.summary.total_tokens);
-    console.log('  - Average response time:', Math.round(data.summary.average_duration_ms), 'ms');
-    console.log('  - Fastest model:', data.summary.fastest_model);
-    console.log('  - Slowest model:', data.summary.slowest_model);
     console.log('\n💰 Total Cost: $0.06 USDC (6 models × $0.01)');
+    console.log('✓ All payments verified via x402');
 
   } catch (error: any) {
-    console.error('❌ Error:', error.message);
+    console.error('❌ Error:', error.response?.data || error.message);
     throw error;
   }
 }

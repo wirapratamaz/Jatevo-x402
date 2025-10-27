@@ -37,39 +37,38 @@ For more detailed information about x402, visit the [official documentation](htt
 ### Installation
 
 ```bash
-npm install x402-fetch
+npm install x402-axios axios viem
 # or
-pnpm install x402-fetch
+pnpm install x402-axios axios viem
 ```
 
 ### Basic Usage
 
-```typescript
-import { x402Fetch } from 'x402-fetch';
+```javascript
+import { withPaymentInterceptor } from 'x402-axios';
+import axios from 'axios';
+import { privateKeyToAccount } from 'viem/accounts';
 
-// Configure x402-enabled fetch
-const fetch = x402Fetch({
-  privateKey: process.env.PRIVATE_KEY, // Your Ethereum private key
-  network: 'base' // Base network for fast, cheap payments
-});
+// Configure your account with private key
+const account = privateKeyToAccount('0xYOUR_PRIVATE_KEY');
+
+// Create axios client with x402 payment interceptor
+const client = withPaymentInterceptor(
+  axios.create({ baseURL: 'https://jatevo.ai' }),
+  account
+);
 
 // Make a request to any LLM endpoint
-const response = await fetch('https://jatevo.ai/api/x402/llm/qwen', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    messages: [
-      { role: 'user', content: 'Explain quantum computing in simple terms' }
-    ],
-    temperature: 0.7,
-    max_tokens: 2048
-  })
+const response = await client.post('/api/x402/llm/qwen', {
+  messages: [
+    { role: 'user', content: 'Explain quantum computing in simple terms' }
+  ],
+  temperature: 0.7,
+  max_tokens: 2048,
+  stream: false
 });
 
-const data = await response.json();
-console.log(data.choices[0].message.content);
+console.log(response.data.choices[0].message.content);
 ```
 
 ## API Endpoints
@@ -138,7 +137,7 @@ OpenAI-compatible response format:
 
 1. **Initial Request**: Client sends a request without payment information
 2. **Payment Required**: Server responds with `402 Payment Required` and payment instructions
-3. **Automatic Payment**: `x402-fetch` automatically handles the payment using your private key
+3. **Automatic Payment**: `x402-axios` automatically handles the payment using your private key
 4. **Verification**: Server verifies payment on Base network (~200ms)
 5. **API Call**: Server processes your request and calls the LLM provider
 6. **Response**: Server returns the model's response with transaction details
