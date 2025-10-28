@@ -1,3 +1,6 @@
+## Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=lucacadalora/Jatevo-x402&type=Date)](https://star-history.com/#lucacadalora/Jatevo-x402&Date)
+
 # JATEVO x402 AI Inference API
 
 JATEVO's x402-powered AI inference API enables pay-per-use access to state-of-the-art large language models without API keys, subscriptions, or account management.
