@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { withPaymentInterceptor } from 'x402-axios';
 import axios from 'axios';
 import { privateKeyToAccount } from 'viem/accounts';
+import { createWalletClient, http } from 'viem';
+import { baseSepolia } from 'viem/chains';
 
 /**
  * Basic Chat Example
@@ -14,10 +16,17 @@ async function basicChat() {
   // Configure your account with private key from environment
   const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
 
+  // Create wallet client with proper chain configuration
+  const walletClient = createWalletClient({
+    account,
+    transport: http(),
+    chain: baseSepolia,
+  });
+
   // Create axios client with x402 payment interceptor
   const client = withPaymentInterceptor(
     axios.create({ baseURL: 'https://jatevo.ai' }),
-    account
+    walletClient
   );
 
   console.log('🚀 Sending chat request to Qwen 3 Coder 480B...\n');

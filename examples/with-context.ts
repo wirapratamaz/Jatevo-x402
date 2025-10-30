@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { withPaymentInterceptor } from 'x402-axios';
 import axios from 'axios';
 import { privateKeyToAccount } from 'viem/accounts';
+import { createWalletClient, http } from 'viem';
+import { baseSepolia } from 'viem/chains';
 
 /**
  * Conversation with Context Example
@@ -13,9 +15,15 @@ import { privateKeyToAccount } from 'viem/accounts';
 async function conversationWithContext() {
   const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
 
+  const walletClient = createWalletClient({
+    account,
+    transport: http(),
+    chain: baseSepolia,
+  });
+
   const client = withPaymentInterceptor(
     axios.create({ baseURL: 'https://jatevo.ai' }),
-    account
+    walletClient
   );
 
   // Maintain conversation history
