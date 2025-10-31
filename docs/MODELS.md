@@ -385,4 +385,4 @@ For questions about model selection or performance:
 
 - **Email**: support@jatevo.ai
 - **Documentation**: [API Reference](./API_REFERENCE.md) | [README](../README.md)
-- **GitHub Issues**: [Report an issue](https://github.com/yourusername/x402-api/issues)
+- **GitHub Issues**: [Report an issue](https://github.com/jatevo/x402-api/issues)

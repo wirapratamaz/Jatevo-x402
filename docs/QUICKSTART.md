@@ -1,25 +1,27 @@
 # Quick Start Guide
 
-Get started with JATEVO x402 AI Inference API in under 5 minutes.
+Get started with JATEVO x402 AI Inference API in under 5 minutes. Now with dual-network support for both Base and Solana!
 
 ## Prerequisites
 
 - Node.js 18+ or Python 3.8+
-- Ethereum wallet with:
-  - Some ETH on Base network (for gas fees, ~$0.50)
-  - USDC on Base network (for payments)
-- Your wallet's private key
+- Choose your network:
+  - **Base Network**: Ethereum wallet with ETH for gas (~$0.50) and USDC for payments
+  - **Solana Network**: Solana wallet with SOL for gas (~$0.01) and USDC for payments
+- Your wallet's private key (Base) or keypair (Solana)
 
 ## Step 1: Get Your Wallet Ready
 
-### Option A: Use an Existing Wallet
+### For Base Network
+
+#### Option A: Use an Existing Wallet
 
 Export your private key from MetaMask or another wallet:
 1. Open MetaMask
 2. Click account menu → Account Details
 3. Export Private Key (requires password)
 
-### Option B: Create a New Wallet
+#### Option B: Create a New Wallet
 
 ```bash
 # Using ethers.js
@@ -28,7 +30,7 @@ npx ethers-cli create-wallet
 # Or use any Ethereum wallet tool
 ```
 
-### Add Funds to Base Network
+#### Add Funds to Base Network
 
 1. Bridge ETH to Base: https://bridge.base.org
 2. Swap some ETH for USDC on Base (use Uniswap or similar)
@@ -37,14 +39,44 @@ Recommended minimum:
 - 0.01 ETH (~$20) for gas
 - 1 USDC for testing (~100 requests)
 
+### For Solana Network
+
+#### Option A: Use Phantom Wallet (Browser)
+
+1. Install [Phantom Wallet](https://phantom.app)
+2. Create or import a wallet
+3. Fund with SOL and USDC
+
+#### Option B: Create a Keypair (Server)
+
+```bash
+# Using Solana CLI
+solana-keygen new --outfile ./solana-keypair.json
+
+# Or generate in code
+```
+
+#### Add Funds to Solana
+
+1. Transfer USDC from exchange (Coinbase, Binance, etc.)
+2. Or swap SOL for USDC on [Jupiter](https://jup.ag)
+
+Recommended minimum:
+- 0.01 SOL (~$2) for gas
+- 1 USDC for testing (~100 requests)
+
 ## Step 2: Install Dependencies
 
 ### JavaScript/TypeScript
 
 ```bash
-npm install x402-axios axios viem dotenv
+# Install the official SDK with dual-network support
+npm install jatevo-x402-sdk
 # or
-pnpm install x402-axios axios viem dotenv
+pnpm install jatevo-x402-sdk
+
+# For legacy Base-only implementation
+npm install x402-axios axios viem dotenv
 ```
 
 ### Python (coming soon)
@@ -58,48 +90,75 @@ pip install x402-python
 Create a `.env` file:
 
 ```bash
-PRIVATE_KEY=0x...  # Your wallet private key
+# For Base Network
+PRIVATE_KEY=0x...  # Your Base wallet private key
+
+# For Solana Network  
+SOLANA_KEYPAIR_PATH=./solana-keypair.json  # Path to keypair file
+# Or for browser apps, no env needed (uses Phantom)
 ```
 
-⚠️ **Security**: Never commit `.env` to git. Add it to `.gitignore`.
+⚠️ **Security**: Never commit `.env` or keypair files to git. Add them to `.gitignore`.
 
 ## Step 4: Make Your First Request
 
-### JavaScript/TypeScript
+### Using the SDK - Base Network
 
-Create `test.ts`:
+Create `test-base.ts`:
 
 ```typescript
 import 'dotenv/config';
-import { withPaymentInterceptor } from 'x402-axios';
-import axios from 'axios';
-import { privateKeyToAccount } from 'viem/accounts';
+import { X402Client } from 'jatevo-x402-sdk';
 
-const account = privateKeyToAccount(process.env.PRIVATE_KEY as `0x${string}`);
-
-const client = withPaymentInterceptor(
-  axios.create({ baseURL: 'https://jatevo.ai' }),
-  account
-);
+const client = new X402Client({
+  baseUrl: 'https://jatevo.ai',
+  network: 'base',
+  privateKey: process.env.PRIVATE_KEY,
+  debug: true
+});
 
 async function main() {
-  const response = await client.post('/api/x402/llm/qwen', {
-    messages: [
-      { role: 'user', content: 'Say hello!' }
-    ],
-    stream: false
-  });
-
-  console.log(response.data.choices[0].message.content);
+  const response = await client.chat('qwen', 'Say hello!');
+  console.log(response);
 }
 
 main();
 ```
 
-Run it:
+### Using the SDK - Solana Network
+
+Create `test-solana.ts`:
+
+```typescript
+import 'dotenv/config';
+import { X402Client } from 'jatevo-x402-sdk';
+import { Keypair } from '@solana/web3.js';
+import * as fs from 'fs';
+
+// Load keypair
+const secretKey = JSON.parse(fs.readFileSync('./solana-keypair.json', 'utf-8'));
+const keypair = Keypair.fromSecretKey(new Uint8Array(secretKey));
+
+const client = new X402Client({
+  baseUrl: 'https://jatevo.ai',
+  network: 'solana',
+  solanaWallet: keypair,
+  debug: true
+});
+
+async function main() {
+  const response = await client.chat('qwen', 'Say hello!');
+  console.log(response);
+}
+
+main();
+```
+
+Run either:
 
 ```bash
-npx tsx test.ts
+npx tsx test-base.ts    # For Base network
+npx tsx test-solana.ts  # For Solana network
 ```
 
 ## Step 5: Understanding the Response
@@ -267,7 +326,7 @@ async function makeRequest(messages: any[]) {
 
 ## Getting Help
 
-- **GitHub Issues**: [Report bugs](https://github.com/yourusername/x402-api/issues)
+- **GitHub Issues**: [Report bugs](https://github.com/jatevo/x402-api/issues)
 - **Email**: support@jatevo.ai
 - **Docs**: [Full documentation](../README.md)
 

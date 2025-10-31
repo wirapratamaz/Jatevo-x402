@@ -449,6 +449,6 @@ interface ChatCompletion {
 
 For questions, issues, or feature requests:
 
-- **GitHub Issues**: [Create an issue](https://github.com/yourusername/x402-api/issues)
+- **GitHub Issues**: [Create an issue](https://github.com/jatevo/x402-api/issues)
 - **Email**: support@jatevo.ai
 - **Documentation**: [README](../README.md) | [Model Comparison](./MODELS.md)
