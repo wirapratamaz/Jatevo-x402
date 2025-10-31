@@ -164,12 +164,6 @@ See the [examples](./examples) folder for:
 - [API Reference](./docs/API_REFERENCE.md)
 - [Integration Guide](./docs/integration.md)
 
-## Support
-
-- GitHub Issues: [github.com/jatevo/x402-api](https://github.com/jatevo/x402-api)
-- Discord: [discord.gg/jatevo](https://discord.gg/jatevo)
-- Email: support@jatevo.ai
-
 ## License
 
 MIT - See [LICENSE](./LICENSE) file
