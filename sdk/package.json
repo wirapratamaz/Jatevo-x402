@@ -1,0 +1,50 @@
+{
+  "name": "jatevo-x402-sdk",
+  "version": "1.1.0",
+  "description": "Official SDK for Jatevo x402 LLM API Aggregator - Supports both Base and Solana networks",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"No tests yet\""
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "x402",
+    "payment-protocol",
+    "llm",
+    "ai",
+    "api",
+    "jatevo",
+    "base",
+    "solana",
+    "usdc",
+    "micropayments",
+    "blockchain",
+    "ethereum",
+    "web3",
+    "phantom",
+    "solflare"
+  ],
+  "author": "Jatevo",
+  "license": "MIT",
+  "dependencies": {
+    "@solana/spl-token": "^0.4.0",
+    "@solana/web3.js": "^1.95.0",
+    "axios": "^1.7.0",
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "homepage": "https://jatevo.ai/x402/documentation"
+}

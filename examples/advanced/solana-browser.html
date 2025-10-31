@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JATEVO x402 - Solana Browser Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .wallet-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .wallet-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .wallet-address {
+            font-family: monospace;
+            font-size: 14px;
+            color: #666;
+            word-break: break-all;
+        }
+        .balance {
+            font-weight: bold;
+            color: #28a745;
+        }
+        button {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #6d28d9;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .model-selector {
+            margin-bottom: 20px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        .query-section {
+            margin-top: 30px;
+        }
+        textarea {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .response-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f1f3f5;
+            border-radius: 8px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            font-family: -apple-system, system-ui, sans-serif;
+            line-height: 1.6;
+        }
+        .loading {
+            color: #7c3aed;
+            font-style: italic;
+        }
+        .error {
+            color: #dc3545;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        .success {
+            color: #155724;
+            padding: 10px;
+            background: #d4edda;
+            border-radius: 6px;
+            margin-top: 10px;
+        }
+        .network-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #9333ea;
+            color: white;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .instructions {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #495057;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .instructions ol {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 JATEVO x402 - Solana Browser Example</h1>
+        
+        <div class="instructions">
+            <h3>Getting Started</h3>
+            <ol>
+                <li>Install <a href="https://phantom.app" target="_blank">Phantom Wallet</a> or <a href="https://solflare.com" target="_blank">Solflare Wallet</a></li>
+                <li>Connect your wallet using the button below</li>
+                <li>Ensure you have USDC on Solana mainnet (min 0.01 USDC per query)</li>
+                <li>Select a model and enter your question</li>
+                <li>Click "Send Query" - payment will be handled automatically!</li>
+            </ol>
+        </div>
+
+        <div class="wallet-section">
+            <div class="wallet-info">
+                <div>
+                    <span class="network-badge">SOLANA MAINNET</span>
+                    <div class="wallet-address" id="walletAddress">Not connected</div>
+                    <div class="balance" id="balance"></div>
+                </div>
+                <button id="connectBtn" onclick="connectWallet()">Connect Phantom</button>
+            </div>
+        </div>
+
+        <div class="query-section">
+            <div class="model-selector">
+                <label for="modelSelect">Select AI Model:</label>
+                <select id="modelSelect">
+                    <option value="qwen">Qwen 3 Coder 480B - Best for coding</option>
+                    <option value="deepseek-v3.1">DeepSeek V3.1 - General purpose</option>
+                    <option value="kimi">Kimi K2 - Long context (200K)</option>
+                    <option value="glm">GLM 4.5 - Balanced performance</option>
+                    <option value="deepseek-r1-0528">DeepSeek R1 - Reasoning focused</option>
+                    <option value="gpt-oss">GPT-OSS 120B - OpenAI alternative</option>
+                </select>
+            </div>
+
+            <label for="queryInput">Your Question:</label>
+            <textarea id="queryInput" placeholder="Ask anything... e.g., 'Explain quantum computing in simple terms'"></textarea>
+            
+            <button id="sendBtn" onclick="sendQuery()" disabled>Send Query (0.01 USDC)</button>
+        </div>
+
+        <div id="response" class="response-section">Response will appear here...</div>
+    </div>
+
+    <!-- Load the SDK from CDN (in production, bundle it properly) -->
+    <script type="module">
+        import { X402Client } from 'https://unpkg.com/jatevo-x402-sdk@1.1.0/dist/index.mjs';
+        
+        let client = null;
+        let connected = false;
+
+        // Initialize the client for Solana
+        window.initClient = function() {
+            client = new X402Client({
+                baseUrl: 'https://jatevo.ai',
+                network: 'solana',
+                debug: true
+            });
+            console.log('X402 Client initialized for Solana');
+        };
+
+        // Connect wallet function
+        window.connectWallet = async function() {
+            const connectBtn = document.getElementById('connectBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            
+            try {
+                connectBtn.disabled = true;
+                connectBtn.textContent = 'Connecting...';
+                
+                if (!client) {
+                    window.initClient();
+                }
+                
+                // Connect to Phantom wallet
+                const { address } = await client.connectWallet();
+                
+                // Update UI
+                document.getElementById('walletAddress').textContent = 
+                    address.slice(0, 4) + '...' + address.slice(-4);
+                connectBtn.textContent = 'Connected';
+                sendBtn.disabled = false;
+                connected = true;
+                
+                // Check balance
+                try {
+                    const balance = await client.checkSolanaBalance();
+                    document.getElementById('balance').textContent = 
+                        `Balance: ${(balance / 1_000_000).toFixed(2)} USDC`;
+                } catch (err) {
+                    console.log('Could not fetch balance:', err);
+                    document.getElementById('balance').textContent = 'Balance: Check wallet';
+                }
+                
+                showSuccess('Wallet connected successfully!');
+                
+            } catch (error) {
+                console.error('Connection error:', error);
+                showError('Failed to connect wallet. Make sure Phantom is installed.');
+                connectBtn.disabled = false;
+                connectBtn.textContent = 'Connect Phantom';
+            }
+        };
+
+        // Send query function
+        window.sendQuery = async function() {
+            if (!connected || !client) {
+                showError('Please connect your wallet first');
+                return;
+            }
+            
+            const model = document.getElementById('modelSelect').value;
+            const query = document.getElementById('queryInput').value.trim();
+            
+            if (!query) {
+                showError('Please enter a question');
+                return;
+            }
+            
+            const sendBtn = document.getElementById('sendBtn');
+            const responseDiv = document.getElementById('response');
+            
+            try {
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Processing...';
+                responseDiv.innerHTML = '<div class="loading">Creating payment and querying model...</div>';
+                
+                // Make the API call (payment handled automatically by SDK)
+                const response = await client.chat(model, query, {
+                    temperature: 0.7,
+                    max_tokens: 1000
+                });
+                
+                // Display response
+                responseDiv.textContent = response;
+                
+                // Update balance
+                try {
+                    const balance = await client.checkSolanaBalance();
+                    document.getElementById('balance').textContent = 
+                        `Balance: ${(balance / 1_000_000).toFixed(2)} USDC`;
+                } catch (err) {
+                    console.log('Could not update balance:', err);
+                }
+                
+                showSuccess('Query successful! 0.01 USDC paid via Solana.');
+                
+            } catch (error) {
+                console.error('Query error:', error);
+                responseDiv.innerHTML = '';
+                
+                if (error.message?.includes('insufficient')) {
+                    showError('Insufficient USDC balance. Please add USDC to your Solana wallet.');
+                } else if (error.response?.status === 402) {
+                    showError('Payment required. Make sure you have USDC in your wallet.');
+                } else {
+                    showError(`Error: ${error.message || 'Failed to process request'}`);
+                }
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = 'Send Query (0.01 USDC)';
+            }
+        };
+
+        // Helper functions for notifications
+        window.showError = function(message) {
+            removeNotifications();
+            const error = document.createElement('div');
+            error.className = 'error';
+            error.textContent = message;
+            document.querySelector('.query-section').appendChild(error);
+            setTimeout(removeNotifications, 5000);
+        };
+
+        window.showSuccess = function(message) {
+            removeNotifications();
+            const success = document.createElement('div');
+            success.className = 'success';
+            success.textContent = message;
+            document.querySelector('.query-section').appendChild(success);
+            setTimeout(removeNotifications, 5000);
+        };
+
+        function removeNotifications() {
+            document.querySelectorAll('.error, .success').forEach(el => el.remove());
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            window.initClient();
+            console.log('JATEVO x402 Solana Example loaded');
+        });
+    </script>
+</body>
+</html>

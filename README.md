@@ -1,203 +1,169 @@
-## Star History
-[![Star History Chart](https://api.star-history.com/svg?repos=lucacadalora/Jatevo-x402&type=Date)](https://star-history.com/#lucacadalora/Jatevo-x402&Date)
+# Jatevo x402 LLM API
 
-# JATEVO x402 AI Inference API
-
-JATEVO's x402-powered AI inference API enables pay-per-use access to state-of-the-art large language models without API keys, subscriptions, or account management.
-
-**Live API**: `https://jatevo.ai`
-
-> **Note**: Replace with your actual deployment URL when self-hosting
+Pay-per-use AI models via micropayments. No API keys, no subscriptions. Just $0.01 per request.
 
 ## What is x402?
 
-x402 is an open payment standard that enables services to charge for access to their APIs using the `402 Payment Required` HTTP status code. It allows clients to programmatically pay for resources without accounts or credentials, using crypto-native payments for speed, privacy, and efficiency.
+x402 is an open payment standard that enables services to charge for API access using the HTTP `402 Payment Required` status code. Instead of managing API keys, subscriptions, or accounts, clients pay for exactly what they use through cryptocurrency micropayments.
 
-For more detailed information about x402, visit the [official documentation](https://x402.gitbook.io/x402).
+**How x402 Works:**
+1. **Request** → Your client sends a request to the API
+2. **402 Response** → Server returns payment requirements if payment needed
+3. **Payment** → Client signs a micropayment authorization (handled by SDK)
+4. **Retry** → Request automatically retries with payment proof
+5. **Response** → You receive the API response
 
-## Features
+**Benefits:**
+- ✅ **No API Keys** - Your wallet address is your identity
+- ✅ **No Subscriptions** - Pay only for what you use
+- ✅ **Privacy** - No personal information required
+- ✅ **Instant Access** - Start using immediately with USDC
+- ✅ **Fair Pricing** - Same price for everyone: $0.01 per request
 
-- **No API Keys** - Your wallet address is your authentication
-- **Pay Per Use** - Only pay for what you actually use
-- **Instant Settlement** - Payments verified in ~200ms on Base network
-- **Multiple Models** - Access to 6+ state-of-the-art LLMs
-- **OpenAI Compatible** - Drop-in replacement for OpenAI API clients
-- **Multi-Model Queries** - Query multiple models in parallel with a single request
+The x402 protocol uses USDC (a USD stablecoin) for payments, ensuring predictable costs. Payments settle in ~200ms on Base network or ~2s on Solana network.
 
-## Available Models
+Learn more about the x402 standard at [x402.gitbook.io](https://x402.gitbook.io/x402)
 
-| Model | Context Window | Pricing |
-|-------|----------------|---------|
-| **Qwen 3 Coder 480B** | 128K tokens | $0.01 USDC per request |
-| **GLM 4.5** | 128K tokens | $0.01 USDC per request |
-| **Kimi K2 Instruct** | 200K tokens | $0.01 USDC per request |
-| **DeepSeek R1 0528** | 64K tokens | $0.01 USDC per request |
-| **DeepSeek V3.1** | 128K tokens | $0.01 USDC per request |
-| **GPT-OSS 120B** | 32K tokens | $0.01 USDC per request |
-
-## Quick Start
-
-### Installation
+## Quick Start (Terminal/VSCode)
 
 ```bash
-npm install x402-axios axios viem
-# or
-pnpm install x402-axios axios viem
+npm install jatevo-x402-sdk axios
 ```
 
-### Basic Usage
-
 ```javascript
-import { withPaymentInterceptor } from 'x402-axios';
-import axios from 'axios';
-import { privateKeyToAccount } from 'viem/accounts';
+const { withPaymentInterceptor } = require('jatevo-x402-sdk');
+const axios = require('axios');
 
-// Configure your account with private key
-const account = privateKeyToAccount('0xYOUR_PRIVATE_KEY');
+// Your private key (keep secure!)
+const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
-// Create axios client with x402 payment interceptor
-const client = withPaymentInterceptor(
-  axios.create({ baseURL: 'https://jatevo.ai' }),
-  account
-);
+// Create client with payment handler
+const client = withPaymentInterceptor(axios.create(), PRIVATE_KEY);
 
-// Make a request to any LLM endpoint
-const response = await client.post('/api/x402/llm/qwen', {
+// Call any model
+const response = await client.post('https://api.jatevo.ai/chat/completions/qwen', {
   messages: [
-    { role: 'user', content: 'Explain quantum computing in simple terms' }
-  ],
-  temperature: 0.7,
-  max_tokens: 2048,
-  stream: false
+    { role: 'user', content: 'Hello!' }
+  ]
 });
 
 console.log(response.data.choices[0].message.content);
 ```
 
+That's it! The SDK handles payments automatically.
+
+## Available Models
+
+All models cost $0.01 USDC per request:
+
+| Model | Best For | Context |
+|-------|----------|---------|
+| `qwen` | Code generation | 128K |
+| `glm` | Advanced reasoning | 128K |
+| `kimi` | Long context tasks | 200K |
+| `deepseek-r1-0528` | Complex reasoning | 64K |
+| `deepseek-v3.1` | General chat | 128K |
+| `gpt-oss` | OpenAI compatibility | 32K |
+
 ## API Endpoints
 
-### Single Model Endpoints
+Replace `{model}` with any model from the table above:
 
-Query individual models with optimized performance:
-
-- `POST /api/x402/llm/qwen` - Qwen 3 Coder 480B
-- `POST /api/x402/llm/glm` - GLM 4.5
-- `POST /api/x402/llm/kimi` - Kimi K2 Instruct
-- `POST /api/x402/llm/deepseek-r1-0528` - DeepSeek R1 0528
-- `POST /api/x402/llm/deepseek-v3.1` - DeepSeek V3.1
-- `POST /api/x402/llm/gpt-oss` - GPT-OSS 120B
-
-### Multi-Model Endpoint
-
-Query all 6 models in parallel and get aggregated results:
-
-- `POST /api/x402/multi` - Query all models simultaneously ($0.06 USDC)
-
-### Request Format
-
-All endpoints accept OpenAI-compatible request format:
-
-```typescript
-{
-  "messages": [
-    { "role": "system", "content": "You are a helpful assistant" },
-    { "role": "user", "content": "Your question here" }
-  ],
-  "temperature": 0.7,      // Optional: 0.0 to 2.0 (default: 0.7)
-  "max_tokens": 2048,      // Optional: max tokens to generate (default: 2048)
-  "stream": false          // Optional: streaming not currently supported
-}
 ```
-
-### Response Format
-
-OpenAI-compatible response format:
-
-```typescript
-{
-  "id": "chatcmpl-...",
-  "object": "chat.completion",
-  "created": 1234567890,
-  "model": "qwen-3-coder-480b",
-  "choices": [{
-    "index": 0,
-    "message": {
-      "role": "assistant",
-      "content": "Response text..."
-    },
-    "finish_reason": "stop"
-  }],
-  "usage": {
-    "prompt_tokens": 20,
-    "completion_tokens": 150,
-    "total_tokens": 170
-  },
-  "provider": "x402-jatevo-LLM-inference"
-}
+POST https://api.jatevo.ai/chat/completions/{model}
 ```
-
-## Payment Flow
-
-1. **Initial Request**: Client sends a request without payment information
-2. **Payment Required**: Server responds with `402 Payment Required` and payment instructions
-3. **Automatic Payment**: `x402-axios` automatically handles the payment using your private key
-4. **Verification**: Server verifies payment on Base network (~200ms)
-5. **API Call**: Server processes your request and calls the LLM provider
-6. **Response**: Server returns the model's response with transaction details
-
-## Environment Setup
-
-Create a `.env` file with your Ethereum private key:
-
-```bash
-PRIVATE_KEY=0x...
-```
-
-**Security Note**: Keep your private key secure and never commit it to version control. The private key should have some ETH on Base network for gas fees and USDC for payments.
 
 ## Examples
 
-See the [examples](./examples) directory for complete working implementations:
+### Basic Chat
+```javascript
+const response = await client.post('https://api.jatevo.ai/chat/completions/qwen', {
+  messages: [
+    { role: 'user', content: 'Explain async/await' }
+  ],
+  temperature: 0.7,
+  max_tokens: 200
+});
+```
 
-- [basic-chat.ts](./examples/basic-chat.ts) - Simple chat completion
-- [multi-model.ts](./examples/multi-model.ts) - Query multiple models in parallel
-- [with-context.ts](./examples/with-context.ts) - Multi-turn conversation with context
-- [model-comparison.ts](./examples/model-comparison.ts) - Compare responses across models
+### Code Generation
+```javascript
+const response = await client.post('https://api.jatevo.ai/chat/completions/qwen', {
+  messages: [
+    { role: 'system', content: 'You are an expert programmer.' },
+    { role: 'user', content: 'Write a React component for a todo list' }
+  ]
+});
+```
 
-## API Reference
+### Multi-turn Conversation
+```javascript
+const messages = [
+  { role: 'user', content: 'What is React?' },
+  { role: 'assistant', content: 'React is a JavaScript library...' },
+  { role: 'user', content: 'Show me a simple example' }
+];
 
-For detailed API documentation including all parameters, response schemas, and error codes, see [API_REFERENCE.md](./docs/API_REFERENCE.md).
+const response = await client.post('https://api.jatevo.ai/chat/completions/kimi', {
+  messages: messages
+});
+```
 
-## Model Comparison
+## Setup Requirements
 
-For a detailed comparison of model capabilities, performance, and pricing, see [MODELS.md](./docs/MODELS.md).
+1. **USDC Balance**: You need USDC on Base or Solana
+   - Base: Bridge USDC to Base network
+   - Solana: Get USDC on Solana mainnet
 
-## Pricing
+2. **Private Key**: Export from your wallet
+   - MetaMask: Settings → Security → Export Private Key
+   - Phantom: Settings → Export Private Key
 
-All single-model endpoints: **$0.01 USDC per request**
+3. **Environment Variable**: Store securely
+```bash
+export PRIVATE_KEY="0x..."  # For Base
+# or
+export PRIVATE_KEY="[...]"  # For Solana (array format)
+```
 
-Multi-model endpoint: **$0.06 USDC per request** (queries all 6 models in parallel)
+## How It Works
 
-Payments are made in USDC on the Base network for fast settlement and low gas fees.
+1. You make an API request
+2. Server responds with payment request (HTTP 402)
+3. SDK signs a micro-payment ($0.01 USDC)
+4. Request retries with payment proof
+5. You get the AI response
 
-## Rate Limits
+All handled automatically by the SDK!
 
-- No rate limits - pay-per-use model
-- No daily quotas or usage caps
-- Scale as needed with instant payments
+## Common Issues
 
-## Support
+### "Payment Required" Error
+- Check USDC balance in your wallet
+- Ensure private key is correctly set
+- Verify you're on the right network
 
-For issues, questions, or feature requests:
+### "Invalid Private Key"
+- Base: Should start with `0x`
+- Solana: Should be array format `[1,2,3...]`
 
-- GitHub Issues: [Create an issue](https://github.com/yourusername/x402-api/issues)
-- Email: support@jatevo.ai
-- Documentation: [Full API Reference](./docs/API_REFERENCE.md)
+### Rate Limiting
+- Default: 10 requests per minute
+- Need more? Contact support
+
+## More Examples
+
+See the [examples](./examples) folder for:
+- `basic.js` - Simple chat completion
+- `streaming.js` - Streaming responses
+- `compare-models.js` - Compare different models
+
+## Advanced Topics
+
+- [Network Selection Guide](./docs/networks.md)
+- [API Reference](./docs/API_REFERENCE.md)
+- [Integration Guide](./docs/integration.md)
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE) for details
-
-## About JATEVO
-
-JATEVO is an innovative AI inference platform empowering developers and startups with high-performance, scalable model hosting across global markets. Learn more at [jatevo.ai](https://jatevo.ai).
+MIT - See [LICENSE](./LICENSE) file
